@@ -1,21 +1,34 @@
 const express=require("express");
 const {adminauth}=require("../utils/auth");
+const connectDB=require("./config/database");
 const app=express();
+const User=require("./models/user");
 
-//request handler
-app.get("/getUserdata",(req,res)=>{
-    //Logic of db call and get user data
+app.post("/signup",async(req,res)=>{
+    //creating a new instance of the User model and saving it to the database
+    const user=new User({
+        firstName:"Virat",
+        lastName:"Kumar",
+        emailId:"viratkumar@example.com",
+        password:"password123",
+    });
 
-    throw new Error("Error in getting user data");
-    res.send("User data sent");
-});
-
-app.use("/",(err,req,res,next)=>{
-    if(err){
-        res.status(500).send("something went wrong");
+    try{
+        await user.save();
+        res.send("User created successfully");
+    }catch(err){
+        res.status(500).send("Error creating user");
     }
+   
+
 })
 
-app.listen(3000,()=>{
+connectDB().then(()=>{
+    console.log("Database connected successfully");
+    app.listen(3000,()=>{
     console.log("server is running ")
 });
+}).catch(err=>{
+    console.log("Error in connecting to database",err);
+})
+
