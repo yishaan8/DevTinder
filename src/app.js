@@ -14,7 +14,7 @@ app.post("/signup",async(req,res)=>{
         await user.save();
         res.send("User created successfully");
     }catch(err){
-        res.status(500).send("Error creating user");
+        res.status(500).send(err.message);
     }
    
 

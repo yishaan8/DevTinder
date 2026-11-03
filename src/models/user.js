@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 const userSchema=new mongoose.Schema({
     firstName: {
@@ -16,10 +17,20 @@ const userSchema=new mongoose.Schema({
         unique:true, // if email id is already there in the database then mongoose will not allow to save the data in the database.
         lowercase:true, // convert the email id to lowercase before saving it in the database.
         trim:true, // remove the white spaces from the email id before saving it in the database.
+        validate(value){
+            if(!validator.isEmail(value)){
+                throw new Error("Email is not valid :" + value);
+            }
+        }
     },
     password:{
         type: String,
-        required:true
+        required:true,
+        validate(value){
+            if(!validator.isStrongPassword(value)){
+                throw new Error("Password is not strong enough");
+            }
+        }
     },
     age:{
         type: Number,
@@ -35,7 +46,12 @@ const userSchema=new mongoose.Schema({
     },
     photoUrl:{
         type:String,        
-        default:"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+        default:"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png",
+        validate(value){
+            if(!validator.isURL(value)){
+                throw new Error("Photo URL is not valid "+value)
+            }
+        }
     },
     about:{
         type:String,
