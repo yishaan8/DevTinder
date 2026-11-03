@@ -3,18 +3,35 @@ const {adminauth}=require("../utils/auth");
 const connectDB=require("./config/database");
 const app=express();
 const User=require("./models/user");
+const validatesignupdata=require("./helper/validation");
+const bcrypt=require("bcrypt"); 
 
 app.use(express.json());
 
 app.post("/signup",async(req,res)=>{
-    //creating a new instance of the User model and saving it to the database
-    const user=new User(req.body);
-
+    //validatation of data 
     try{
+        validatesignupdata(req);
+
+        const {firstName,lastName,emailId,password}=req.body;
+
+    //Encrypt the password before saving it to the database
+        // we will use bcryptjs library to encrypt the password before saving it to the database.
+        const passwordHash= await bcrypt.hash(password,10); // 10 is the number of rounds to be used for hashing the password. The higher the number, the more secure the password will be but it will take more time to hash the password.
+        console.log(passwordHash);
+
+
+    //creating a new instance of the User model and saving it to the database
+        const user=new User({
+            firstName,
+            lastName,
+            emailId,
+            password:passwordHash,
+        });
         await user.save();
         res.send("User created successfully");
     }catch(err){
-        res.status(500).send(err.message);
+        res.status(500).send("ERROR : " + err.message);
     }
    
 
