@@ -4,9 +4,12 @@ const connectDB=require("./config/database");
 const app=express();
 const User=require("./models/user");
 const validatesignupdata=require("./helper/validation");
-const bcrypt=require("bcrypt"); 
+const bcrypt=require("bcrypt");
+const cookieParser=require("cookie-parser");
+const jwt=require("jsonwebtoken");   
 
 app.use(express.json());
+app.use(cookieParser()); // Add this line to use cookie-parser middleware
 
 app.post("/signup",async(req,res)=>{
     //validatation of data 
@@ -48,6 +51,13 @@ app.post("/login",async (req,res)=>{
 
         const isPasswordValid= await bcrypt.compare(password,user.password);
         if(isPasswordValid){
+
+            //create a JWT token for the user 
+            const token = await jwt.sign({_id: user._id},"DEV@TINDER");
+            console.log(token); 
+
+            //Add the token to cookie and send the response to the client 
+            res.cookie("token",token);
             res.send("Login successful");
         }else{
             res.status(401).send("Invalid credentials");
@@ -57,6 +67,34 @@ app.post("/login",async (req,res)=>{
         res.status(400).send("ERROR :"+ err.message)
     }
 })
+
+
+app.get("/profile",async (req,res)=>{
+    try{
+    const cookie=req.cookies;
+
+    const {token}=cookie;
+    if(!token){
+        throw new Error("Invalid token")
+    }
+
+    //validate the token
+    const decodedmessage= await jwt.verify(token,"DEV@TINDER")
+    console.log(decodedmessage)
+    const{_id}=decodedmessage;
+    console.log("Logged in user is "+ _id)
+    
+    const user=await User.findById(_id);
+    if(!user){
+        throw new Error("User does not exist")
+    }
+
+    res.send(user)
+    }catch(err){
+        res.status(400).send("ERROR: " + err.message)
+    }
+})
+
 
 // GET user by email
 app.get("/user",async(req,res)=>{
