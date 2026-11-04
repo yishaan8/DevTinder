@@ -6,7 +6,8 @@ const User=require("./models/user");
 const validatesignupdata=require("./helper/validation");
 const bcrypt=require("bcrypt");
 const cookieParser=require("cookie-parser");
-const jwt=require("jsonwebtoken");   
+const jwt=require("jsonwebtoken"); 
+const {userAuth}=require("../utils/auth")  
 
 app.use(express.json());
 app.use(cookieParser()); // Add this line to use cookie-parser middleware
@@ -21,7 +22,7 @@ app.post("/signup",async(req,res)=>{
     //Encrypt the password before saving it to the database
         // we will use bcryptjs library to encrypt the password before saving it to the database.
         const passwordHash= await bcrypt.hash(password,10); // 10 is the number of rounds to be used for hashing the password. The higher the number, the more secure the password will be but it will take more time to hash the password.
-        console.log(passwordHash);
+        
 
 
     //creating a new instance of the User model and saving it to the database
@@ -54,7 +55,7 @@ app.post("/login",async (req,res)=>{
 
             //create a JWT token for the user 
             const token = await jwt.sign({_id: user._id},"DEV@TINDER");
-            console.log(token); 
+            
 
             //Add the token to cookie and send the response to the client 
             res.cookie("token",token);
@@ -69,93 +70,25 @@ app.post("/login",async (req,res)=>{
 })
 
 
-app.get("/profile",async (req,res)=>{
+app.get("/profile",userAuth,async (req,res)=>{
     try{
-    const cookie=req.cookies;
-
-    const {token}=cookie;
-    if(!token){
-        throw new Error("Invalid token")
-    }
-
-    //validate the token
-    const decodedmessage= await jwt.verify(token,"DEV@TINDER")
-    console.log(decodedmessage)
-    const{_id}=decodedmessage;
-    console.log("Logged in user is "+ _id)
     
-    const user=await User.findById(_id);
-    if(!user){
-        throw new Error("User does not exist")
-    }
+        const user=req.user; 
 
-    res.send(user)
+        res.send(user)
+    
     }catch(err){
         res.status(400).send("ERROR: " + err.message)
     }
 })
 
+app.post("/sendConnection",userAuth,async (req,res)=>{
 
-// GET user by email
-app.get("/user",async(req,res)=>{
-    const userEmail=req.body.emailId;
-    try{
-       const user= await User.find({emailId:userEmail});
-       if(user.length===0){
-        return res.status(404).send("User not found");
-       }else{
-        res.send(user);
-       }
-    }
-    catch(err){
-        res.status(500).send("Error fetching user");
-    }
+    //sending a connection request
+    console.log("sending a connection request")
+
+    res.send("Connect request sent")
 })
-
-//Feed API- GET /feed -get all the users from the database and return them in the response
-app.get("/feed",async (req,res)=>{
-    try{
-        const users=await User.find({});
-        res.send(users);
-    }catch(err){
-        res.status(400).send("Something went wrong");
-    }
-})
-
-//delete a user from the database
-app.delete("/user",async (req,res)=>{
-    const userId=req.body.userId;
-    try{
-        const user=await User.findByIdAndDelete(userId);3
-        res.send("User deleted successfully");
-    }catch(err){
-        res.status(500).send("Error deleting user");
-    }
-});
-
-//update data of the user
-app.patch("/user/:userId",async (req,res)=>{
-    const userId=req.params?.userId;
-    const data=req.body;
-    try{
-    const AllowedUpdates=["userId","photoUrl","about","gender","skills"];
-
-    const isupdateallowed=Object.keys(data).every(k => AllowedUpdates.includes(k)
-    );
-    if(!isupdateallowed){
-        throw new Error("Update not allowed");
-    }
-    if(data?.skills.length>10){
-        throw new Error("Skills should not be more than 10");
-    }
-
-        const user = await User.findByIdAndUpdate({_id:userId},data,{runvalidators:true});
-        res.send("User updated successfully");
-    }catch(err){
-        res.status(500).send("Update failed: " + err.message);
-    }
-})
-
 
 
 connectDB().then(()=>{
