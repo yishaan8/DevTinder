@@ -1,5 +1,8 @@
+const { JsonWebTokenError } = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const validator = require('validator');
+const jwt=require("jsonwebtoken")
+const bcrypt=require("bcrypt")
 
 const userSchema=new mongoose.Schema({
     firstName: {
@@ -63,6 +66,23 @@ const userSchema=new mongoose.Schema({
 },
 {timestamps:true} // this will create two fields in the database createdAt and updatedAt which will store the time when the user was created and updated respectively.
 );
+
+userSchema.methods.getJWT = async function(){
+    const user=this;
+
+    const token= await jwt.sign({_id:user._id},"DEV@TINDER",{expiresIn : "1d"})
+
+    return token;
+}
+
+userSchema.methods.validatePassword=async function(passwordinputbyuser){
+    const user=this;
+    const passwordhash=user.password
+
+   const ispasswordvalid = await bcrypt.compare(passwordinputbyuser,passwordhash);
+
+   return ispasswordvalid;
+}
 
 const User=mongoose.model("User",userSchema);
 
