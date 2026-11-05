@@ -54,7 +54,7 @@ app.post("/login",async (req,res)=>{
         if(isPasswordValid){
 
             //create a JWT token for the user 
-            const token = await jwt.sign({_id: user._id},"DEV@TINDER");
+            const token = await jwt.sign({_id: user._id},"DEV@TINDER",{expiresIn:"1d"});
             
 
             //Add the token to cookie and send the response to the client 
@@ -67,7 +67,7 @@ app.post("/login",async (req,res)=>{
     }catch(err){
         res.status(400).send("ERROR :"+ err.message)
     }
-})
+})  
 
 
 app.get("/profile",userAuth,async (req,res)=>{
