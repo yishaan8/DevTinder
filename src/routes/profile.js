@@ -4,7 +4,7 @@ const profileRouter=express.Router();
 const {userAuth}=require("../../utils/auth") 
 const {validateProfileEditData}=require("../helper/validation") 
 
-profileRouter.get("/profile",userAuth,async (req,res)=>{
+profileRouter.get("/profile/view",userAuth,async (req,res)=>{
     try{
     
         const user=req.user; 
