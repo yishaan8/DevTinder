@@ -13,7 +13,8 @@ userRouter.get("/user/requests/received",userAuth,async (req,res)=>{
         const connectionrequest= await ConnectionRequestModel.find({
             toUserId:loggedInUser._id,
             status:"interested"
-        }).populate("fromUserId",["firstName","lastName"]);
+        }).populate("fromUserId","firstName lastName photoUrl gender age about skills");
+        //.populate("fromUserId",["firstName","lastName"]);
 
 
         res.json({
@@ -25,6 +26,32 @@ userRouter.get("/user/requests/received",userAuth,async (req,res)=>{
     }
     
     
+})
+
+userRouter.get("/user/connections",userAuth,async(req,res)=>{
+    try{
+
+        const loggedInUser=req.user;
+
+        const connectionrequest=await ConnectionRequestModel.find({
+            $or: [
+                {toUserId:loggedInUser._id,status:"accepted"},
+                {fromUserId:loggedInUser._id,status:"accepted"}
+            ]
+        }).populate("fromUserId","firstName lastName skills about age gender photoUrl").populate("toUserId","firstName lastName skills about age gender photoUrl")
+
+
+        const data=connectionrequest.map((row)=> {
+            if(row.fromUserId._id.toString() === loggedInUser._id.toString()){
+               return row.toUserId
+            }
+            return row.fromUserId
+        })
+
+        res.json({data: data})
+    }catch(err){
+        res.status(400).send("ERROR: " + err.message)    
+    }
 })
 
 

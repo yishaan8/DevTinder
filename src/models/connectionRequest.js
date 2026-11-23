@@ -10,12 +10,13 @@ const connectionRequestSchema=new mongoose.Schema({
     },
     toUserId:{
         type: mongoose.Schema.Types.ObjectId,
+        ref:"User",
         required:true
     },
     status:{
         type: String,
         enum:{
-            values:["ignore","interested","accepted","rejected"]
+            values:["ignored","interested","accepted","rejected"]
         },
         required:true
     }
@@ -27,16 +28,14 @@ const connectionRequestSchema=new mongoose.Schema({
 //ConnectionRequest.find(fromUserId:2342356546, toUserId:54879674969208)
 connectionRequestSchema.index({fromUserId : 1,toUserId:1});
 
-connectionRequestSchema.pre("save",function(next){
-    const connectionRequest=this;
-    //check if the fromUserId is same as toUserId
+connectionRequestSchema.pre("save", function() {
+    const connectionRequest = this;
 
-    if(connectionRequest.fromUserId.equals(connectionRequest.toUserId)){
-        throw new Error("Cannot send Connection request to yourself!")
+    // Check if the sender and receiver are the same
+    if (connectionRequest.fromUserId.equals(connectionRequest.toUserId)) {
+        throw new Error("Cannot send Connection request to yourself!");
     }
-    next();
-
-})
+});
 
 const ConnectionRequestModel=new mongoose.model("ConnectionRequest",connectionRequestSchema)
 
