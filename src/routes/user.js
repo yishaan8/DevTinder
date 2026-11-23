@@ -1,6 +1,7 @@
 const express=require("express");
 const { userAuth } = require("../../utils/auth");
 const ConnectionRequestModel = require("../models/connectionRequest");
+const User = require("../models/user");
 const userRouter=express.Router();
 
 
@@ -51,6 +52,45 @@ userRouter.get("/user/connections",userAuth,async(req,res)=>{
         res.json({data: data})
     }catch(err){
         res.status(400).send("ERROR: " + err.message)    
+    }
+})
+
+userRouter.get("/feed",userAuth,async(req,res)=>{
+    try{
+        //User should see all other user cards except
+        // 0. his own card
+        // 1. his connections
+        // 2. ignored people
+        // 3. already sent the connection request
+
+        const loggedInUser=req.user;
+
+        //find all the connection request (sent+received)
+        const connectionrequests = await ConnectionRequestModel.find({
+            $or:[
+                {fromUserId:loggedInUser._id},{toUserId:loggedInUser._id}
+            ]
+        }).select("fromUserId toUserId")
+
+
+        const hideUsersFromFeed= new Set();
+        connectionrequests.forEach(req=>{
+            hideUsersFromFeed.add(req.fromUserId.toString());
+            hideUsersFromFeed.add(req.toUserId.toString());
+        })
+
+        const users= await User.find({
+            $and:[
+            {_id:{$nin:Array.from(hideUsersFromFeed)}},
+            {_id:{ $ne:loggedInUser._id}}
+        ]
+        }).select("firstName lastName  about skills photoUrl");
+
+        res.send(users);
+
+
+    }catch(err){
+        res.status(400).json({messsage:err.message})
     }
 })
 
